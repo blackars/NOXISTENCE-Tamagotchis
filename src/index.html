@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amix Tamagotchi Alienígena</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- TensorFlow.js - versión optimizada -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+    
+    <!-- Three.js y sus módulos - versión compatible -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    
+    <!-- Script para configurar TensorFlow.js y suprimir warnings -->
+    <script>
+        // Suprimir warnings de TensorFlow.js
+        const originalWarn = console.warn;
+        console.warn = function(...args) {
+            // Filtrar warnings específicos de TensorFlow.js
+            const message = args.join(' ');
+            if (message.includes('kernel') && message.includes('already registered')) {
+                return; // No mostrar estos warnings
+            }
+            if (message.includes('The kernel') && message.includes('for backend')) {
+                return; // No mostrar estos warnings
+            }
+            originalWarn.apply(console, args);
+        };
+        
+        // Configurar TensorFlow.js una sola vez
+        window.tfConfig = {
+            initialized: false,
+            async init() {
+                if (this.initialized) return;
+                
+                try {
+                    if (typeof tf !== 'undefined') {
+                        // Configurar backend WebGL solo una vez
+                        await tf.setBackend('webgl');
+                        this.initialized = true;
+                        console.log('TensorFlow.js configurado correctamente');
+                    }
+                } catch (error) {
+                    console.warn('Error configurando TensorFlow.js:', error);
+                }
+            }
+        };
+        
+        // Verificar que los módulos se carguen correctamente
+        window.addEventListener('load', () => {
+            console.log('Three.js disponible:', typeof THREE !== 'undefined');
+            console.log('GLTFLoader disponible:', typeof THREE.GLTFLoader !== 'undefined');
+            console.log('OrbitControls disponible:', typeof THREE.OrbitControls !== 'undefined');
+            console.log('TensorFlow disponible:', typeof tf !== 'undefined');
+        });
+    </script>
+</head>
+<body>
+    <!-- Título de la aplicación -->
+    <h1 class="app-title">Amix: Maxkodian Ikravux</h1>
+    <!-- Contenedor del canvas de Three.js -->
+    <div class="scene-container">
+        <canvas id="scene-canvas"></canvas>
+        <!-- Panel de respuesta del alienígena -->
+        <div class="response-panel">
+            <div id="response-text" class="response-text">
+                ¡Hola! Soy tu alienígena Amix. ¿Qué tal estás?
+            </div>
+        </div>
+    </div>
+    <!-- Script del sistema de IA -->
+    <script src="ai-system.js"></script>
+    <!-- Script principal de la aplicación -->
+    <script src="main.js"></script>
+</body>
+</html> 

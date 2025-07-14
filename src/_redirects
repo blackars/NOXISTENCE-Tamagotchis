@@ -1,0 +1,8 @@
+# Redirecciones para Netlify
+# Este archivo asegura que las rutas funcionen correctamente
+
+# Redirigir todas las rutas a index.html para SPA
+/*    /index.html   200
+ 
+# Permitir acceso a archivos estáticos
+/public/*    /public/:splat   200 
