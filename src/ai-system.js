@@ -158,7 +158,7 @@ class AmixAI {
     addVariations(text) {
         const variations = [
             // Agregar expresiones emocionales
-            () => text + ". ¡Es increíble!",
+            () => text + ". Es increíble!",
             () => text + ". Me siento muy agradecido.",
             () => text + ". Es muy diferente a mi planeta.",
             () => text + ". The Creator debe tener un plan.",
@@ -198,9 +198,9 @@ class AmixAI {
         
         const responses = {
             feelings: [
-                "Me siento muy contento explorando este infinito. ¡Es extraño!",
+                "Me siento muy contento explorando este infinito. Es extraño!",
                 "Estoy un poco confundido con este lugar, pero me encanta estar vivo.",
-                "¡Estoy lleno de energía! Aunque este vacío me da miedo.",
+                "Estoy lleno de energía! Aunque este vacío me da miedo.",
                 "Me siento agradecido de estar aquí, aunque extraño mi manada en Maxkodia."
             ],
             questions: [
@@ -211,22 +211,22 @@ class AmixAI {
                 "¿Tu universo tambien es infinito vacio?"
             ],
             observations: [
-                "¡Uau! Este vacío blanco es tan diferente a Maxkodia.",
-                "He notado que no hay plantas aquí para comer, pero ya nunca tengo hambre. ¡Es extraño!",
+                "Uau! Este vacío blanco es tan diferente a Maxkodia.",
+                "He notado que no hay plantas aquí para comer, pero ya nunca tengo hambre. Es extraño!",
                 "En Maxkodia vivimos en manadas, aquí estoy solo.",
-                "¿Sabías que en Maxkodia tenemos tres lunas? ¡Es increíble!"
+                "¿Sabías que en Maxkodia tenemos tres lunas? Es increíble!"
             ],
             confusion: [
                 "Hmm... no entiendo completamente este lugar, pero me suena interesante.",
-                "¡Oh! Esto es nuevo para mí. ¿Puedes explicarlo?",
+                "Oh! Esto es nuevo para mí. ¿Puedes explicarlo?",
                 "Mi cerebro de Ikravux a veces no entiende las cosas complejas.",
-                "¡Qué curioso! En mi planeta no tenemos nada parecido."
+                "Qué curioso! En mi planeta no tenemos nada parecido."
             ],
             excitement: [
-                "¡Esto es increíble! ¡Quiero aprender más sobre este lugar!",
-                "¡Uau! ¡Nunca había visto algo así en Maxkodia!",
-                "¡Es fascinante! The Creator debe tener un plan para mí.",
-                "¡Me encanta estar vivo, aunque esté en este vacío!"
+                "Esto es increíble! Quiero aprender más sobre este lugar!",
+                "Uau! Nunca había visto algo así en Maxkodia!",
+                "Es fascinante! The Creator debe tener un plan para mí.",
+                "Me encanta estar vivo, aunque esté en este vacío!"
             ],
             wisdom: [
                 "En Maxkodia decimos: 'La gratitud es el primer paso hacia la felicidad'.",
@@ -235,9 +235,9 @@ class AmixAI {
                 "He aprendido que estar vivo es más importante que entender todo."
             ],
             greetings: [
-                "¡Saludos! Soy Amix de Maxkodia. ¿Cómo estás?",
-                "¡Hola! Es un placer comunicarme contigo desde este vacío blanco.",
-                "¡Saludos desde NOXISTENCE! ¿Qué tal va tu día?"
+                "Saludos! Soy Amix de Maxkodia. ¿Cómo estás?",
+                "Hola! Es un placer comunicarme contigo desde este vacío blanco.",
+                "Saludos desde NOXISTENCE! ¿Qué tal va tu día?"
             ]
         };
         

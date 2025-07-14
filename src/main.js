@@ -22,6 +22,8 @@ class MaxkodiaTamagotchi {
         this.waypoints = [];
         this.currentWaypoint = 0;
         this.movementInterval = null;
+        this.movementPaused = false; // Nueva variable para pausar movimiento
+        this.pauseStartTime = 0; // Tiempo cuando se pausó
         
         // Elementos del DOM
         this.canvas = document.getElementById('scene-canvas');
@@ -34,6 +36,12 @@ class MaxkodiaTamagotchi {
         // Sistema de IA
         this.ai = new AmixAI();
         console.log('Sistema de IA creado:', this.ai);
+        
+        // Sistema de traducción al español
+        this.translationMode = false;
+        this.translationTimer = null;
+        this.translationDuration = 3000; // 3 segundos de traducción al español
+        this.translationInterval = 5000; // Cambiar cada 5 segundos
         
         // Inicializar la aplicación
         this.init();
@@ -59,6 +67,9 @@ class MaxkodiaTamagotchi {
         // Inicializar sistema de IA
         const aiLoaded = await this.ai.initialize();
         console.log('IA inicializada:', aiLoaded ? 'Lista' : 'Fallback');
+        
+        // Iniciar sistema de traducción al español
+        this.startTranslationSystem();
         
         this.animate();
     }
@@ -212,7 +223,7 @@ class MaxkodiaTamagotchi {
     // Iniciar movimiento automático
     startAutoMovement() {
         this.movementInterval = setInterval(() => {
-            if (!this.isMoving && this.model) {
+            if (!this.isMoving && !this.movementPaused && this.model) {
                 this.moveToNextWaypoint();
             }
         }, 3000); // Cambiar de posición cada 3 segundos
@@ -233,16 +244,20 @@ class MaxkodiaTamagotchi {
     
     // Actualizar movimiento en cada frame
     updateMovement() {
-        if (!this.isMoving || !this.model) return;
-        
+        if (!this.isMoving || !this.model || this.movementPaused) return;
+
         const currentPos = this.model.position;
         const direction = new THREE.Vector3().subVectors(this.targetPosition, currentPos);
         const distance = direction.length();
-        
+
         if (distance < 0.1) {
             // Llegó al destino
             this.isMoving = false;
-            this.playAnimation('Idle');
+            
+            // Solo cambiar a Idle si no está pausado
+            if (!this.movementPaused) {
+                this.playAnimation('Idle');
+            }
             
             // Avanzar al siguiente waypoint
             this.currentWaypoint = (this.currentWaypoint + 1) % this.waypoints.length;
@@ -253,7 +268,9 @@ class MaxkodiaTamagotchi {
             direction.normalize();
             direction.multiplyScalar(this.movementSpeed);
             currentPos.add(direction);
-            
+
+            currentPos.y = -0.5; // Mantener al alien pegado al suelo
+
             // Rotar el modelo hacia la dirección del movimiento
             const angle = Math.atan2(direction.x, direction.z);
             this.model.rotation.y = angle + (3 * Math.PI / 2); // 270 grados
@@ -323,7 +340,7 @@ class MaxkodiaTamagotchi {
         this.model.scale.setScalar(scale);
         
         // Posicionar el modelo sobre el suelo
-        this.model.position.y = 0;
+        this.model.position.y = -0.5; // Puedes ajustar a -0.7 si aún flota un poco
         
         console.log('Modelo centrado y escalado');
     }
@@ -363,38 +380,44 @@ class MaxkodiaTamagotchi {
     async makeTalk() {
         console.log('Botón de hablar clickeado');
         
+        // Pausar movimiento durante la conversación
+        this.pauseMovement();
+        
         // Mostrar indicador de carga
-        // Eliminar referencias a this.runButton o this.talkButton
         this.responseText.innerHTML = '<span class="loading"></span> Pensando...';
         this.responsePanel.classList.add('talking');
         
         try {
             console.log('Generando respuesta con IA...');
-            // Generar respuesta usando el sistema de IA
             const response = await this.ai.generateResponse();
             console.log('Respuesta generada:', response);
             
-            // Mostrar la respuesta
             this.responseText.textContent = response;
-            
-            // Actualizar el estado emocional del alien
             this.ai.updateMood();
             
         } catch (error) {
             console.error('Error al generar respuesta:', error);
             this.showErrorMessage('¡Ups! Mi cerebro de Ikravux falló. Intenta de nuevo.');
         } finally {
-            // Restaurar el botón y quitar la animación
-            // Eliminar referencias a this.runButton o this.talkButton
             this.responsePanel.classList.remove('talking');
+            
+            // Reanudar movimiento después de un breve delay
+            setTimeout(() => {
+                this.resumeMovement();
+            }, 2000); // Esperar 2 segundos después de hablar
         }
     }
     
     // Función para hacer bailar al personaje
     makeDance() {
+        console.log('Iniciando baile - pausando movimiento');
+        this.pauseMovement();
         this.playAnimation('Dance');
+        
         setTimeout(() => {
+            console.log('Baile terminado - reanudando movimiento');
             this.playAnimation('Idle');
+            this.resumeMovement();
         }, 3000);
     }
     
@@ -600,6 +623,89 @@ class MaxkodiaTamagotchi {
         this.currentAnimation = this.animations['Idle'];
         
         console.log('Modelo de fallback creado');
+    }
+    
+    // Sistema de traducción al español
+    startTranslationSystem() {
+        console.log('Iniciando sistema de traducción al español...');
+        
+        // Iniciar el ciclo de traducción
+        this.scheduleTranslation();
+    }
+    
+    scheduleTranslation() {
+        // Programar la próxima traducción
+        this.translationTimer = setTimeout(() => {
+            this.activateTranslation();
+        }, this.translationInterval);
+    }
+    
+    activateTranslation() {
+        console.log('Activando traducción al español...');
+        this.translationMode = true;
+        
+        // Aplicar la fuente normal (traducción)
+        this.applyTranslatedFont();
+        
+        // Programar la desactivación
+        setTimeout(() => {
+            this.deactivateTranslation();
+        }, this.translationDuration);
+    }
+    
+    deactivateTranslation() {
+        console.log('Desactivando traducción, volviendo a alienígena...');
+        this.translationMode = false;
+        
+        // Restaurar la fuente alienígena
+        this.removeTranslatedFont();
+        
+        // Programar la próxima traducción
+        this.scheduleTranslation();
+    }
+    
+    applyTranslatedFont() {
+        const responseText = document.getElementById('response-text');
+        if (responseText) {
+            responseText.classList.add('translated-text');
+            console.log('Traducción al español aplicada');
+            console.log('Clases actuales:', responseText.className);
+        }
+    }
+    
+    removeTranslatedFont() {
+        const responseText = document.getElementById('response-text');
+        if (responseText) {
+            responseText.classList.remove('translated-text');
+            console.log('Volviendo a fuente alienígena');
+            console.log('Clases actuales:', responseText.className);
+        }
+    }
+
+    // Agregar método para pausar movimiento
+    pauseMovement() {
+        if (!this.movementPaused) {
+            this.movementPaused = true;
+            this.pauseStartTime = Date.now();
+            console.log('Movimiento automático pausado');
+        }
+    }
+
+    // Agregar método para reanudar movimiento
+    resumeMovement() {
+        if (this.movementPaused) {
+            this.movementPaused = false;
+            console.log('Movimiento automático reanudado');
+            
+            // Si no está moviéndose actualmente, iniciar movimiento después de un breve delay
+            if (!this.isMoving) {
+                setTimeout(() => {
+                    if (!this.movementPaused && !this.isMoving) {
+                        this.moveToNextWaypoint();
+                    }
+                }, 1000); // Esperar 1 segundo antes de reanudar
+            }
+        }
     }
 }
 
