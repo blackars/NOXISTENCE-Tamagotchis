@@ -50,6 +50,18 @@ class MaxkodiaTamagotchi {
         this.mouse = new THREE.Vector2();
         this.clickCount = 0;
         this.clickTimer = null;
+        this.leaves = []; // Array para guardar las hojas en la escena
+        this.targetLeaf = null;      // Referencia a la hoja objetivo (o null)
+        this.isMoving = false;       // ¿Está en movimiento?
+        this.currentWaypoint = 0;    // Índice del waypoint actual
+        this.waypoints = [           // Waypoints de patrulla
+            new THREE.Vector3(-8, -0.5, 0),
+            new THREE.Vector3(8, -0.5, 0),
+            new THREE.Vector3(0, -0.5, -8),
+            new THREE.Vector3(0, -0.5, 8)
+        ];
+        this.movementSpeed = 0.02;
+        this.leaves = [];
     }
     
     // Inicialización de la aplicación
@@ -123,7 +135,7 @@ class MaxkodiaTamagotchi {
     // Configuración de las luces
     setupLights() {
         // Luz hemisférica más intensa y clara
-        const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x888888, 1.5);
+        const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x888888, 0.8);
         hemisphereLight.position.set(0, 20, 0);
         this.scene.add(hemisphereLight);
 
@@ -132,7 +144,7 @@ class MaxkodiaTamagotchi {
         this.scene.add(ambientLight);
 
         // Luz direccional principal más fuerte y centrada
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
         directionalLight.position.set(0, 10, 10);
         directionalLight.target.position.set(0, 0, 0);
         directionalLight.castShadow = true;
@@ -208,10 +220,10 @@ class MaxkodiaTamagotchi {
     setupAutoMovement() {
         // Definir waypoints (puntos de destino)
         this.waypoints = [
-            new THREE.Vector3(-8, 0, 0),  // Izquierda
-            new THREE.Vector3(8, 0, 0),   // Derecha
-            new THREE.Vector3(0, 0, -8),  // Atrás
-            new THREE.Vector3(0, 0, 8)    // Adelante
+            new THREE.Vector3(-8, -0.5, 0),
+            new THREE.Vector3(8, -0.5, 0),
+            new THREE.Vector3(0, -0.5, -8),
+            new THREE.Vector3(0, -0.5, 8)
         ];
         
         // Iniciar movimiento automático después de 2 segundos
@@ -223,7 +235,7 @@ class MaxkodiaTamagotchi {
     // Iniciar movimiento automático
     startAutoMovement() {
         this.movementInterval = setInterval(() => {
-            if (!this.isMoving && !this.movementPaused && this.model) {
+            if (!this.isMoving && !this.movementPaused && !this.goingToLeaf && this.model) {
                 this.moveToNextWaypoint();
             }
         }, 3000); // Cambiar de posición cada 3 segundos
@@ -232,6 +244,7 @@ class MaxkodiaTamagotchi {
     // Mover al siguiente waypoint
     moveToNextWaypoint() {
         if (this.waypoints.length === 0) return;
+        if (this.goingToLeaf) return; // No cambiar destino si va a la hoja
         
         this.isMoving = true;
         this.targetPosition.copy(this.waypoints[this.currentWaypoint]);
@@ -244,37 +257,56 @@ class MaxkodiaTamagotchi {
     
     // Actualizar movimiento en cada frame
     updateMovement() {
-        if (!this.isMoving || !this.model || this.movementPaused) return;
+        if (!this.isMoving || !this.model) return;
 
+        // Determinar el destino: hoja o waypoint
+        let target;
+        if (this.targetLeaf) {
+            target = this.targetLeaf.position;
+        } else {
+            target = this.waypoints[this.currentWaypoint];
+        }
+
+        // Solo mover en X y Z
         const currentPos = this.model.position;
-        const direction = new THREE.Vector3().subVectors(this.targetPosition, currentPos);
-        const distance = direction.length();
+        const targetXZ = new THREE.Vector2(target.x, target.z);
+        const currentXZ = new THREE.Vector2(currentPos.x, currentPos.z);
+        const distance = targetXZ.distanceTo(currentXZ);
 
         if (distance < 0.1) {
             // Llegó al destino
+            this.model.position.x = target.x;
+            this.model.position.z = target.z;
+            this.model.position.y = -0.5;
             this.isMoving = false;
-            
-            // Solo cambiar a Idle si no está pausado
-            if (!this.movementPaused) {
+
+            if (this.targetLeaf) {
+                // Comer la hoja
+                this.scene.remove(this.targetLeaf);
+                this.leaves = this.leaves.filter(l => l !== this.targetLeaf);
+                this.targetLeaf = null;
                 this.playAnimation('Idle');
+                setTimeout(() => this.startPatrol(), 1000); // Reanuda patrulla tras comer
+            } else {
+                // Siguiente waypoint
+                this.playAnimation('Idle');
+                this.currentWaypoint = (this.currentWaypoint + 1) % this.waypoints.length;
+                setTimeout(() => this.moveToNextWaypoint(), 500);
             }
-            
-            // Avanzar al siguiente waypoint
-            this.currentWaypoint = (this.currentWaypoint + 1) % this.waypoints.length;
-            
-            console.log('Llegó al destino, cambiando a Idle');
-        } else {
-            // Mover hacia el destino
-            direction.normalize();
-            direction.multiplyScalar(this.movementSpeed);
-            currentPos.add(direction);
-
-            currentPos.y = -0.5; // Mantener al alien pegado al suelo
-
-            // Rotar el modelo hacia la dirección del movimiento
-            const angle = Math.atan2(direction.x, direction.z);
-            this.model.rotation.y = angle + (3 * Math.PI / 2); // 270 grados
+            return;
         }
+
+        // Mover hacia el destino
+        const direction = new THREE.Vector3(target.x - currentPos.x, 0, target.z - currentPos.z);
+        direction.normalize();
+        direction.multiplyScalar(this.movementSpeed);
+        currentPos.x += direction.x;
+        currentPos.z += direction.z;
+        currentPos.y = -0.5;
+
+        // Rotar hacia el destino
+        const angle = Math.atan2(direction.x, direction.z);
+        this.model.rotation.y = angle + (3 * Math.PI / 2);
     }
     
     // Carga del modelo GLB
@@ -707,9 +739,147 @@ class MaxkodiaTamagotchi {
             }
         }
     }
+
+    // Iniciar patrulla (rutina normal)
+    startPatrol() {
+        if (this.targetLeaf) return; // Si hay hoja, no patrullar
+        this.isMoving = true;
+        this.playAnimation('Run');
+    }
+
+    // Iniciar movimiento hacia el siguiente waypoint
+    moveToNextWaypoint() {
+        if (this.targetLeaf) return; // Si hay hoja, no patrullar
+        this.isMoving = true;
+        this.playAnimation('Run');
+    }
+
+    // Ir hacia la hoja
+    goToLeaf(leaf) {
+        this.targetLeaf = leaf;
+        this.isMoving = true;
+        this.playAnimation('Run');
+    }
 }
 
-// Inicializar la aplicación cuando el DOM esté listo
+// Renderizar la hoja como icono 3D en la esquina superior derecha
+function renderLeafIcon() {
+    const leafCanvas = document.getElementById('leaf-canvas');
+    if (!leafCanvas) return;
+
+    // Crear escena, cámara y renderer para el icono
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 10);
+    camera.position.set(0, 0, 2.8);
+
+    const renderer = new THREE.WebGLRenderer({ canvas: leafCanvas, alpha: true, antialias: true });
+    renderer.setClearColor(0x000000, 0); // Fondo transparente
+    renderer.setSize(90, 90);
+
+    // Luz
+    const light = new THREE.DirectionalLight(0xffffff, 1);
+    light.position.set(1, 1, 2);
+    scene.add(light);
+
+    // Cargar el modelo de la hoja
+    const loader = new THREE.GLTFLoader();
+    loader.load('leaf.glb', (gltf) => {
+        const leaf = gltf.scene;
+        leaf.scale.set(1, 1, 1);
+        scene.add(leaf);
+
+        // Animar el icono (opcional: rotación)
+        function animate() {
+            requestAnimationFrame(animate);
+            leaf.rotation.y += 0.01;
+            renderer.render(scene, camera);
+        }   
+        animate();
+    });
+}
+
+let isDraggingLeaf = false;
+let dragOffset = { x: 0, y: 0 };
+let dragImage = null;
+
+const leafDragContainer = document.getElementById('leaf-drag-container');
+const leafCanvas = document.getElementById('leaf-canvas');
+
+leafDragContainer.addEventListener('mousedown', (e) => {
+    isDraggingLeaf = true;
+    leafDragContainer.classList.add('dragging');
+    dragOffset.x = e.clientX - leafDragContainer.offsetLeft;
+    dragOffset.y = e.clientY - leafDragContainer.offsetTop;
+
+    // Crear imagen de arrastre visual
+    dragImage = leafDragContainer.cloneNode(true);
+    dragImage.style.position = 'fixed';
+    dragImage.style.pointerEvents = 'none';
+    dragImage.style.opacity = '0.7';
+    dragImage.style.zIndex = 3000;
+    document.body.appendChild(dragImage);
+});
+
+document.addEventListener('mousemove', (e) => {
+    if (isDraggingLeaf && dragImage) {
+        dragImage.style.left = (e.clientX - dragOffset.x) + 'px';
+        dragImage.style.top = (e.clientY - dragOffset.y) + 'px';
+    }
+});
+
+document.addEventListener('mouseup', (e) => {
+    if (isDraggingLeaf) {
+        isDraggingLeaf = false;
+        leafDragContainer.classList.remove('dragging');
+        if (dragImage) {
+            document.body.removeChild(dragImage);
+            dragImage = null;
+        }
+
+        // Detectar si se soltó sobre el área del escenario
+        const sceneRect = document.getElementById('scene-canvas').getBoundingClientRect();
+        if (
+            e.clientX >= sceneRect.left &&
+            e.clientX <= sceneRect.right &&
+            e.clientY >= sceneRect.top &&
+            e.clientY <= sceneRect.bottom
+        ) {
+            // Llama a la función para soltar la hoja en la escena 3D
+            dropLeafInScene();
+        }
+    }
+});
+
+function dropLeafInScene() {
+    // Limitar a solo una hoja en el tablero
+    if (window.amixApp.leaves.length > 0) {
+        // Opcional: puedes mostrar un mensaje o animación de que ya hay una hoja
+        return;
+    }
+
+    const min = -7;
+    const max = 7;
+    const x = Math.random() * (max - min) + min;
+    const z = Math.random() * (max - min) + min;
+    const y = -0.5;
+
+    const loader = new THREE.GLTFLoader();
+    loader.load('leaf.glb', (gltf) => {
+        const leaf = gltf.scene;
+        const y = 0;
+        leaf.position.set(x, y, z);
+        leaf.scale.set(1.5, 1.5, 1.5);
+
+        // Agregar la hoja a la escena y al array de hojas
+        window.amixApp.scene.add(leaf);
+        window.amixApp.leaves.push(leaf);
+
+        // Hacer que Amix corra hacia la hoja
+        window.amixApp.goToLeaf(leaf);
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-    new MaxkodiaTamagotchi();
+    window.amixApp = new MaxkodiaTamagotchi();
+    renderLeafIcon();
 }); 

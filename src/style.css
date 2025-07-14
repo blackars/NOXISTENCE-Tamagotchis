@@ -213,22 +213,20 @@ body {
     }
 }
 
-/* Loading indicator */
-.loading {
-    display: inline-block;
-    width: 20px;
-    height: 20px;
-    border: 3px solid rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    border-top-color: #fff;
-    animation: spin 1s ease-in-out infinite;
+
+
+#leaf-drag-container {
+    position: absolute;
+    top: 4vh;
+    right: 4vw;
+    width: 64px;
+    height: 64px;
+    z-index: 1000;
+    cursor: grab;
+    user-select: none;
+    pointer-events: auto;
 }
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-} 
-
-/* Ocultar panel de controles y botones si quedan en el DOM */
-.controls-panel, .control-button {
-    display: none !important;
+#leaf-drag-container.dragging {
+    opacity: 1;
+    cursor: grabbing;
 } 
