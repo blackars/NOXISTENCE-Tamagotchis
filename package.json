@@ -1,0 +1,37 @@
+{
+  "name": "maxkodia-tamagotchi",
+  "version": "1.0.0",
+  "description": "Aplicación web de tamagotchi alienígena con Three.js y IA",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "http-server src -p 8080 -c-1",
+    "dev": "http-server src -p 8080 -c-1 -o",
+    "build": "echo 'No build step required - static files only'",
+    "deploy": "echo 'Drag src/ folder to Netlify for deployment'"
+  },
+  "keywords": [
+    "threejs",
+    "tamagotchi",
+    "3d",
+    "alien",
+    "huggingface",
+    "ai",
+    "webgl"
+  ],
+  "author": "Maxkodia",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/maxkodia-tamagotchi.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/maxkodia-tamagotchi/issues"
+  },
+  "homepage": "https://github.com/yourusername/maxkodia-tamagotchi#readme"
+} 
