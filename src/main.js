@@ -285,6 +285,7 @@ class MaxkodiaTamagotchi {
                 this.scene.remove(this.targetLeaf);
                 this.leaves = this.leaves.filter(l => l !== this.targetLeaf);
                 this.targetLeaf = null;
+                this.playSound('/eating.mp3'); // <-- Aquí se reproduce el sonido
                 this.playAnimation('Idle');
                 setTimeout(() => this.startPatrol(), 1000); // Reanuda patrulla tras comer
             } else {
@@ -759,6 +760,11 @@ class MaxkodiaTamagotchi {
         this.targetLeaf = leaf;
         this.isMoving = true;
         this.playAnimation('Run');
+    }
+
+    playSound(src) {
+        const audio = new Audio(src);
+        audio.play();
     }
 }
 
