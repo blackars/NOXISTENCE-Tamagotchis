@@ -62,6 +62,12 @@ class MaxkodiaTamagotchi {
         ];
         this.movementSpeed = 0.02;
         this.leaves = [];
+        this.talkSounds = [
+            '/sound1.mp3',
+            '/sound2.mp3',
+            '/sound3.mp3'
+        ];
+        this.talkSoundIndex = 0;
     }
     
     // Inicialización de la aplicación
@@ -427,6 +433,9 @@ class MaxkodiaTamagotchi {
             
             this.responseText.textContent = response;
             this.ai.updateMood();
+
+            // Reproducir sonido de hablar sincronizado con el mensaje
+            this.playNextTalkSound();
             
         } catch (error) {
             console.error('Error al generar respuesta:', error);
@@ -765,6 +774,14 @@ class MaxkodiaTamagotchi {
     playSound(src) {
         const audio = new Audio(src);
         audio.play();
+    }
+
+    playNextTalkSound() {
+        const src = this.talkSounds[this.talkSoundIndex];
+        const audio = new Audio(src);
+        audio.play();
+        // Alternar al siguiente sonido para la próxima vez
+        this.talkSoundIndex = (this.talkSoundIndex + 1) % this.talkSounds.length;
     }
 }
 
